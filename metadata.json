@@ -1,0 +1,5 @@
+{
+  "name": "化粧品処方開発AI",
+  "description": "AIを活用した化粧品処方開発システム。希望する製品特性を入力するだけで、AIが詳細でプロフェッショナルな処方を生成します。",
+  "requestFramePermissions": []
+}
