@@ -12,21 +12,26 @@ const productTypes: ProductType[] = ['化粧水', 'クリーム', '美容液', '
 const skinTypes: SkinType[] = ['脂性肌', '乾燥肌', '混合肌', '敏感肌', '普通肌'];
 const effects: Effect[] = ['保湿', 'エイジングケア', '美白', 'ニキビケア', '鎮静', 'UVカット'];
 const textures: Texture[] = ['さっぱり', 'しっとり', 'ジェル状', 'ウォータリー'];
+// OEMとしての強みとなる注目原料リスト
+const featuredIngredients: string[] = ['ヒト幹細胞順化培養液', 'NMN', 'エクソソーム', 'CBD', 'バクチオール'];
+
 
 const CheckboxGroup = <T extends string,>({
   label,
   options,
   selected,
   onChange,
+  gridCols = 'grid-cols-2',
 }: {
   label: string;
   options: T[];
   selected: T[];
   onChange: (value: T) => void;
+  gridCols?: string;
 }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
-    <div className="grid grid-cols-2 gap-2">
+    <div className={`grid ${gridCols} gap-2`}>
       {options.map((option) => (
         <label key={option} className="flex items-center space-x-2 text-sm cursor-pointer">
           <input
@@ -141,6 +146,17 @@ const FormulationForm: React.FC<FormulationFormProps> = ({ initialState, onSubmi
           selected={formData.effects}
           onChange={(value) => handleCheckboxChange('effects', value)}
         />
+        
+        <div className="p-4 bg-teal-50 border-l-4 border-teal-500 rounded-r-lg">
+           <CheckboxGroup
+            label="注目の原料 (弊社おすすめ)"
+            options={featuredIngredients}
+            selected={formData.featuredIngredients}
+            onChange={(value) => handleCheckboxChange('featuredIngredients', value)}
+            gridCols="grid-cols-1"
+          />
+        </div>
+
 
         <div>
           <label htmlFor="texture" className="block text-sm font-medium text-gray-700">テクスチャ</label>
@@ -156,7 +172,7 @@ const FormulationForm: React.FC<FormulationFormProps> = ({ initialState, onSubmi
         </div>
 
         <div>
-          <label htmlFor="includeIngredients" className="block text-sm font-medium text-gray-700">配合したい成分 (カンマ区切り)</label>
+          <label htmlFor="includeIngredients" className="block text-sm font-medium text-gray-700">その他配合したい成分 (カンマ区切り)</label>
           <textarea
             id="includeIngredients"
             name="includeIngredients"

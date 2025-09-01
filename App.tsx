@@ -1,11 +1,13 @@
 import React, { useState, useCallback } from 'react';
-import { FormulationInput, Formulation } from './types';
+import { FormulationInput, Formulation, InquiryAction, InquiryDetails } from './types';
 import { generateFormulation } from './services/geminiService';
 import FormulationForm from './components/FormulationForm';
 import FormulationDisplay from './components/FormulationDisplay';
 import Header from './components/Header';
 import Loader from './components/Loader';
 import Footer from './components/Footer';
+import InquiryModal from './components/InquiryModal';
+import { CheckCircleIcon } from './components/icons';
 
 const App: React.FC = () => {
   const [formulationInput, setFormulationInput] = useState<FormulationInput>({
@@ -15,6 +17,7 @@ const App: React.FC = () => {
     productType: '美容液',
     skinTypes: ['乾燥肌', '普通肌'],
     effects: ['エイジングケア', '保湿'],
+    featuredIngredients: ['ヒト幹細胞順化培養液'],
     includeIngredients: 'レチノール, ヒアルロン酸',
     excludeIngredients: 'パラベン, 鉱物油',
     texture: 'さっぱり',
@@ -23,11 +26,17 @@ const App: React.FC = () => {
   const [generatedFormulation, setGeneratedFormulation] = useState<Formulation | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalAction, setModalAction] = useState<InquiryAction | null>(null);
+  const [inquirySuccess, setInquirySuccess] = useState(false);
+
 
   const handleFormSubmit = useCallback(async (input: FormulationInput) => {
     setIsLoading(true);
     setError(null);
     setGeneratedFormulation(null);
+    setFormulationInput(input); // Keep track of the latest input for inquiry
 
     try {
       const result = await generateFormulation(input);
@@ -39,10 +48,48 @@ const App: React.FC = () => {
       setIsLoading(false);
     }
   }, []);
+  
+  const handleOpenInquiryModal = useCallback((action: InquiryAction) => {
+    setModalAction(action);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+    setModalAction(null);
+  }, []);
+
+  const handleInquirySubmit = useCallback(async (details: Omit<InquiryDetails, 'email'>) => {
+    // In a real app, you would send this data to your backend API
+    const fullInquiryDetails: InquiryDetails = {
+        ...details,
+        email: formulationInput.email,
+    };
+    console.log('--- INQUIRY SUBMITTED ---');
+    console.log('Action:', modalAction);
+    console.log('Details:', fullInquiryDetails);
+    console.log('Formulation:', generatedFormulation);
+    console.log('-------------------------');
+
+    handleCloseModal();
+    setInquirySuccess(true);
+    setTimeout(() => {
+        setInquirySuccess(false);
+    }, 5000); // Hide success message after 5 seconds
+  }, [formulationInput, generatedFormulation, modalAction, handleCloseModal]);
+
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 font-sans">
+    <div className="min-h-screen bg-gray-50 text-gray-800 font-sans relative">
       <Header />
+      
+      {inquirySuccess && (
+         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-teal-500 text-white py-2 px-4 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in-down">
+            <CheckCircleIcon className="w-6 h-6" />
+            <span>お問い合わせありがとうございます。担当者よりご連絡いたします。</span>
+        </div>
+      )}
+
       <main className="container mx-auto px-4 py-8 md:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           <div className="lg:col-span-4 xl:col-span-3">
@@ -68,13 +115,26 @@ const App: React.FC = () => {
                 </div>
               )}
               {generatedFormulation && (
-                <FormulationDisplay formulation={generatedFormulation} />
+                <FormulationDisplay
+                    formulation={generatedFormulation}
+                    onInquiry={handleOpenInquiryModal}
+                />
               )}
             </div>
           </div>
         </div>
       </main>
       <Footer />
+      {generatedFormulation && modalAction && (
+        <InquiryModal
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            onSubmit={handleInquirySubmit}
+            actionType={modalAction}
+            formulationName={generatedFormulation.productName}
+            email={formulationInput.email}
+        />
+      )}
     </div>
   );
 };
